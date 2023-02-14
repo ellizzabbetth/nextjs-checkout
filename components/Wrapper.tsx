@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Head from "next/head";
+import Footer from "./Footer";
 
 const Wrapper = (props) => {
     return (
@@ -14,6 +15,7 @@ const Wrapper = (props) => {
             <div className="container">
                 {props.children}
             </div>
+            {/* <Footer/> */}
         </div>
     );
 };
