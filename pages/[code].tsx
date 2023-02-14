@@ -1,17 +1,30 @@
 import Wrapper from "../components/Wrapper";
 import {useRouter} from "next/router";
-import {useEffect, useState} from "react";
+import {SyntheticEvent, useEffect, useState} from "react";
 import axios from 'axios';
 import constants from "../constants";
-
+import { User } from '../interfaces/user'
+import { Product } from '../interfaces/product'
+import { Order } from '../interfaces/order' 
+import { Quantity } from '../interfaces/quantity' 
 declare var Stripe;
 
-const Home = () => {
+
+
+//type ProductListType = 
+type Props =  {
+    user1: User,
+    product1: Product,
+    order1: Order,
+    quantity1: Quantity,
+}
+
+const Home = ({user1, product1, order1, quantity1}: Props) => {
     const router = useRouter();
     const {code} = router.query;
-    const [user, setUser] = useState(null);
-    const [products, setProducts] = useState([]);
-    const [quantities, setQuantities] = useState([]);
+    const [user, setUser] = useState(user1);
+    const [products, setProducts] = useState([product1]);
+    const [quantities, setQuantities] = useState([quantity1]);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -26,14 +39,14 @@ const Home = () => {
             (
                 async () => {
                     const response = await axios.get(`${constants.endpoint}/links/${code}`);
-
                     const data = response.data;//.data;
 
-                    setUser(data.user);
+                    ///console.log(data)
 
+                    setUser(data.user);
                     setProducts(data.products);
 
-                    setQuantities(data.products.map(p => {
+                    setQuantities(data.products.map((p: Product) => {
                         return {
                             product_id: p.id,
                             quantity: 0
@@ -45,38 +58,50 @@ const Home = () => {
     }, [code]);
 
     const quantity = (id: number) => {
-        const q = quantities.find(q => q.product_id === id);
-
+        const q = quantities.find((q: Quantity) => q?.product_id === id);
+        console.log(q)
         return q ? q.quantity : 0;
     }
 
     const change = (id: number, quantity: number) => {
-        setQuantities(quantities.map(q => {
+        setQuantities(quantities.map((q: Quantity) => {
+           // console.log('change ',quantities)
             if (q.product_id === id) {
+               // console.log(' change ' + id + ' ' + quantity)
                 return {
+                    //...q, 
                     product_id: id,
-                    quantity
+                    quantity: quantity
                 }
             }
-
+           // console.log(q)
             return q;
         }));
     }
 
     const total = () => {
-        let t = 0;
-
-        quantities.forEach(q => {
-            const product = products.find(p => p.id === q.product_id);
-            t += q.quantity * parseFloat(product.price);
-        });
-
-        return t;
+        //console.log('total ', quantities)
+        return quantities.reduce((s, q) => {
+            const product = products.find((p: Product) => p?.id === q?.product_id);
+            return s + product?.price * q?.quantity;
+        }, 0)
     }
 
-    const submit = async (e) => {
+    // const total = () => {
+    //     let t = 0;
+    //     console.log(products)
+    //     quantities.forEach((q: Quantity) => {
+    //         const product = products.find((p: Product) => p?.id === q?.product_id);
+    //         t += q?.quantity * parseFloat(product?.price);;
+    //     });
+
+    //     return t;
+    // }
+
+    const submit = async (e: SyntheticEvent) => {
         e.preventDefault();
 
+        console.log(quantities)
         const response = await axios.post(`${constants.endpoint}/orders`, {
             first_name: firstName,
             last_name: lastName,
@@ -87,16 +112,19 @@ const Home = () => {
             city: city,
             zip: zip,
             code: code,
-            items: quantities
+            user: 94,
+            products: quantities
         });
 
+        console.log(response)
+        //console.log(constants.stripe_key)
         const stripe = new Stripe(constants.stripe_key);
-
+        
         stripe.redirectToCheckout({
             sessionId: response.data.id
         });
     }
-
+    //console.log(products)
     return (
         <Wrapper>
             <div className="py-5 text-center">
@@ -110,15 +138,15 @@ const Home = () => {
                         <span className="text-muted">Products</span>
                     </h4>
                     <ul className="list-group mb-3">
-                        {products.map(p => {
+                        {products.map((p: Product) => {
                             return (
-                                <div key={p.id}>
+                                <div key={p?.id}>
                                     <li className="list-group-item d-flex justify-content-between lh-condensed">
                                         <div>
-                                            <h6 className="my-0">{p.title}</h6>
-                                            <small className="text-muted">{p.description}</small>
+                                            <h6 className="my-0">{p?.title}</h6>
+                                            <small className="text-muted">{p?.description}</small>
                                         </div>
-                                        <span className="text-muted">${p.price}</span>
+                                        <span className="text-muted">${p?.price}</span>
                                     </li>
                                     <li className="list-group-item d-flex justify-content-between lh-condensed">
                                         <div>
@@ -127,8 +155,8 @@ const Home = () => {
 
                                         <input type="number" min="0" className="text-muted form-control"
                                                style={{width: '65px'}}
-                                               defaultValue={quantity(p.id)}
-                                               onChange={e => change(p.id, parseInt(e.target.value))}
+                                               defaultValue={quantity(p?.id)}
+                                               onChange={e => change(p?.id, parseInt(e.target.value))}
                                         />
                                     </li>
                                 </div>

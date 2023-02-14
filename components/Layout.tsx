@@ -39,6 +39,7 @@ class Layout extends Document {
                 rel="stylesheet" 
                 integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" 
                 crossOrigin="anonymous"/>
+        <script src="https://js.stripe.com/v3/"></script>
         </Head>
             <div className="container">
                 {props.children}
